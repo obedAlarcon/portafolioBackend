@@ -1,0 +1,23 @@
+
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=obed
+      - POSTGRES_PASSWORD=obed2025@
+      - POSTGRES_DB=portafoliobackend
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/18/data  # Volumen mapeado
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=movil3526@hotmail.com
+      - PGADMIN_DEFAULT_PASSWORD=obed2025@
+    ports:
+      - "5050:80"
+
+ 

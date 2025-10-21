@@ -1,0 +1,7 @@
+module.exports = {
+  'config':'./db/config.js', //se necesita esta conexion propia por que es por consola
+  'models-path': './db/models/',//los modelos
+  'migrations-path':'./db/migrations',//migraciones 
+  'seeders-path':'./db/seeders',// sed de datos semillas de informacion
+  //esto es para una carga masivo de datos a la ba¿se de datos
+}

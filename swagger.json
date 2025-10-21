@@ -1,0 +1,339 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Portafolio con Node.js",
+    "description": "Un portafolio personal para mostrar a clientes interesados. La API incluye operaciones sobre los usuarios, proyectos y autenticación.",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "user",
+      "description": "Operaciones relacionadas con el usuario"
+    },
+    {
+      "name": "proyect",
+      "description": "Operaciones relacionadas con los proyectos"
+    },
+    {
+      "name": "auth",
+      "description": "Operaciones relacionadas con la autenticación"
+    }
+  ],
+  "paths": {
+    "/user": {
+      "post": {
+        "tags": ["user"],
+        "summary": "Crear un nuevo usuario",
+        "description": "Permite crear un usuario dentro de la aplicación. Se requiere enviar datos básicos como nombre, correo electrónico y contraseña.",
+        "operationId": "createUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud incorrecta. Los datos proporcionados no son válidos."
+          }
+        }
+      },
+      "get": {
+        "tags": ["user"],
+        "summary": "Obtener una lista de usuarios",
+        "description": "Recupera todos los usuarios registrados en la aplicación.",
+        "operationId": "listUser",
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios obtenida con éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud incorrecta. No se pudo recuperar la lista de usuarios."
+          }
+        }
+      }
+    },
+    "/proyect": {
+      "post": {
+        "tags": ["proyect"],
+        "summary": "Crear un nuevo proyecto",
+        "description": "Permite crear un nuevo proyecto en la aplicación. El proyecto debe contener detalles como el nombre, tecnología utilizada y una imagen opcional.",
+        "operationId": "createProyect",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Proyect"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Proyecto creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Proyect"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud incorrecta. Los datos proporcionados no son válidos."
+          }
+        }
+      },
+      "get": {
+        "tags": ["proyect"],
+        "summary": "Obtener una lista de proyectos",
+        "description": "Recupera todos los proyectos registrados en la aplicación.",
+        "operationId": "listProyects",
+        "responses": {
+          "200": {
+            "description": "Lista de proyectos obtenida con éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Proyect"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud incorrecta. No se pudo recuperar la lista de proyectos."
+          }
+        }
+      }
+    },
+    "/api/v1/proyect/upload": {
+      "post": {
+        "tags": ["proyect"],
+        "summary": "Subir un nuevo proyecto con imagen",
+        "description": "Permite subir un nuevo proyecto junto con una imagen. El proyecto debe contener detalles como el nombre, la descripción y la imagen.",
+        "operationId": "uploadProyect",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Nombre del proyecto",
+                    "example": "Proyecto fEjemplo"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Descripción del proyecto",
+                    "example": "Este es un proyecto de ejemplo"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Imagen del proyecto"
+                  }
+                },
+                "required": ["name", "description", "image"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Proyecto creado exitosamente con la imagen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Proyect"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No se subió ninguna imagen o datos inválidos."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Autenticación de usuario",
+        "description": "Permite a un usuario iniciar sesión. Se requiere un correo electrónico y una contraseña válidos.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Correo electrónico del usuario",
+                    "example": "juan.perez@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Contraseña del usuario",
+                    "example": "contraseña123"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Inicio de sesión exitoso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Token JWT de autenticación"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales incorrectas. No se pudo autenticar al usuario."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/recovery": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Recuperación de contraseña",
+        "description": "Permite a un usuario solicitar un correo de recuperación de contraseña proporcionando su correo electrónico.",
+        "operationId": "recoveryPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Correo electrónico del usuario para recuperar su contraseña",
+                    "example": "juan.perez@example.com"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Correo de recuperación enviado con éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Correo de recuperación enviado exitosamente."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud incorrecta. Correo electrónico no proporcionado o inválido."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+         
+        
+          "email": {
+            "type": "string",
+            "example": "juan.perez@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "contraseña123"
+          },
+          "role": {
+            "type": "string",
+            "example": "admin"
+          }
+        }
+      },
+      "Proyect": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 10
+          },
+          "name": {
+            "type": "string",
+            "example": "Sistema de ventas"
+          },
+          "backend": {
+            "type": "string",
+            "example": "Node.js"
+          },
+          "frontend": {
+            "type": "string",
+            "example": "Angular.js"
+          },
+          "libraries": {
+            "type": "string",
+            "example": "Joi"
+          },
+          "image": {
+            "type": "string",
+            "example": "src/toto.jpg"
+          }
+        }
+      }
+    }
+  }
+}
