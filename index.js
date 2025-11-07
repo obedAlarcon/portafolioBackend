@@ -17,7 +17,6 @@ const app = express();
 app.use(express.json());
 
 
-const cors = require('cors');
 app.use(cors({
   origin: 'https://portafolio-frontend.vercel.app', // reemplaza con tu dominio real
   credentials: true
