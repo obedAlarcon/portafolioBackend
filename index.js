@@ -17,10 +17,7 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: [
-    'https://portafolio-frontend-f2qz.vercel.app',
-    'http://localhost:4200'
-  ],
+  origin: true,
   credentials: true
 }));
 

@@ -1,29 +1,28 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // true for port 465, false for other ports
+  service: "gmail",
   auth: {
     user: process.env.SMTP_EMAIL,
     pass: process.env.SMTP_PASSWORD
-  }, 
+  }
 });
 
-// async..await is not allowed in global scope, must use a wrapper
-async function sendMail() {
-  // send mail with defined transport object
- const info = await transporter.sendMail({
-  from: '"Portafolio Web" <desarrolloc20@gmail.com>', // el que autenticaste
-  to: "desarrolloc20@gmail.com", // tu mismo, para recibir
-  subject: "Nuevo mensaje de contacto",
-  text: "El usuario dejó un mensaje",
-  replyTo: "usuarioformulario@mail.com" // aquí sí pones el correo de quien escribió
-});
+async function sendMail({ name, email, message }) {
+  const info = await transporter.sendMail({
+    from: `"Portafolio Web" <${process.env.SMTP_EMAIL}>`,
+    to: process.env.SMTP_EMAIL,
+    subject: "Nuevo mensaje de contacto",
+    html: `
+      <h3>Nuevo mensaje desde el formulario</h3>
+      <p><strong>Nombre:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Mensaje:</strong> ${message}</p>
+    `,
+    replyTo: email
+  });
 
-
-  console.log("Message sent: %s", info.messageId);
-  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
+  console.log("Correo enviado:", info.messageId);
 }
 
-sendMail()
+module.exports = sendMail;
