@@ -16,11 +16,14 @@ const app = express();
 // Middleware para parsear JSON
 app.use(express.json());
 
-
 app.use(cors({
-  origin: 'https://portafolio-frontend.vercel.app', // reemplaza con tu dominio real
+  origin: [
+    'https://portafolio-frontend-f2qz.vercel.app',
+    'http://localhost:4200'
+  ],
   credentials: true
 }));
+
 
 // Asegúrate de importar correctamente la instancia de Sequelize
 // este es el codigo para cincronizar las tabls
