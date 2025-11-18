@@ -216,4 +216,5 @@ postgres_data
 .env
 node_modules
 .env.local
+.env.example
 # End of https://www.toptal.com/developers/gitignore/api/node,windows,linux,macos
