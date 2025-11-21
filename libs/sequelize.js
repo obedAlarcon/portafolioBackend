@@ -22,7 +22,7 @@ if (isProduction) {
   
   sequelize = new Sequelize(config.databaseUrl, {
     dialect: 'postgres',
-    logging: true,
+    logging: false,
     dialectOptions: {
       ssl: {
         require: true,
@@ -38,14 +38,14 @@ if (isProduction) {
   
   sequelize = new Sequelize(URI, {
     dialect: 'postgres',
-    logging: true,
+    logging: false,
   });
 }
 
 // ✅ CONFIGURAR MODELOS
 setupModels(sequelize);
 
-// ✅ AUTENTICACIÓN Y SINCRONIZACIÓN
+// ✅ AUTENTICACIÓN, SINCRONIZACIÓN Y CREACIÓN DE USUARIO
 sequelize.authenticate()
   .then(() => {
     console.log('🟢 Conexión a la base de datos exitosa');
@@ -55,11 +55,48 @@ sequelize.authenticate()
   })
   .then(() => {
     console.log('✅ Tablas sincronizadas correctamente');
+    
+    // ✅ CREAR USUARIO AUTOMÁTICAMENTE
+    return createInitialUser();
+  })
+  .then(() => {
+    console.log('🎉 Base de datos inicializada completamente');
   })
   .catch(err => {
     console.error('❌ Error al conectar con la base de datos:', err);
     process.exit(1);
   });
 
-// ✅ EXPORTAR LA INSTANCIA (ESTO ES LO QUE FALTABA)
+// ✅ FUNCIÓN PARA CREAR USUARIO INICIAL
+async function createInitialUser() {
+  try {
+    const { User } = require('./../db/models/user.model');
+    const bcrypt = require('bcrypt');
+    
+    console.log('🔍 Verificando si existe el usuario...');
+    const userCount = await User.count();
+    console.log(`📊 Usuarios en la base de datos: ${userCount}`);
+    
+    if (userCount === 0) {
+      console.log('🔄 Creando usuario administrador...');
+      const hashedPassword = await bcrypt.hash('admin12345', 10);
+      
+      const user = await User.create({
+        email: 'desarrolloc20@gmail.com',
+        password: hashedPassword,
+        role: 'admin'
+      });
+      
+      console.log('✅ Usuario administrador creado exitosamente');
+      console.log('📧 Email:', user.email);
+      console.log('🔑 Password: admin12345');
+    } else {
+      console.log('✅ Usuario ya existe en la base de datos');
+    }
+  } catch (error) {
+    console.error('❌ Error creando usuario:', error);
+  }
+}
+
+// ✅ EXPORTAR LA INSTANCIA
 module.exports = sequelize;
