@@ -12,7 +12,6 @@ let sequelize;
 if (isProduction) {
   console.log('🔌 Conectando a base de datos en Render...');
   
-  // ✅ VALIDACIÓN CRÍTICA
   if (!config.databaseUrl) {
     console.error('❌ DATABASE_URL es undefined en producción');
     console.error('Variables de entorno disponibles:');
@@ -32,7 +31,35 @@ if (isProduction) {
     },
   });
 } else {
-  // Configuración local...
+  console.log('💻 Conectando a base de datos local...');
+  const USER = encodeURIComponent(config.dbUser);
+  const PASSWORD = encodeURIComponent(config.dbPassword);
+  const URI = `postgres://${USER}:${PASSWORD}@${config.dbHost}:${config.dbPort}/${config.dbName}`;
+  
+  sequelize = new Sequelize(URI, {
+    dialect: 'postgres',
+    logging: true,
+  });
 }
 
-// Resto del código...
+// ✅ CONFIGURAR MODELOS
+setupModels(sequelize);
+
+// ✅ AUTENTICACIÓN Y SINCRONIZACIÓN
+sequelize.authenticate()
+  .then(() => {
+    console.log('🟢 Conexión a la base de datos exitosa');
+    
+    // ✅ SINCRONIZAR TABLAS
+    return sequelize.sync({ alter: true });
+  })
+  .then(() => {
+    console.log('✅ Tablas sincronizadas correctamente');
+  })
+  .catch(err => {
+    console.error('❌ Error al conectar con la base de datos:', err);
+    process.exit(1);
+  });
+
+// ✅ EXPORTAR LA INSTANCIA (ESTO ES LO QUE FALTABA)
+module.exports = sequelize;
