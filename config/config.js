@@ -20,6 +20,12 @@ env: process.env.NODE_ENV || 'development',
   databaseUrl: process.env.DATABASE_URL,
 
 }
+// ✅ AGREGA ESTA VALIDACIÓN
+if (config.env === 'production' && !config.databaseUrl) {
+  console.error('❌ DATABASE_URL no está definida en producción');
+  console.error('Variables disponibles:', Object.keys(process.env).filter(key => key.includes('DATABASE') || key.includes('DB')));
+}
+
 module.exports={config}
 
 
