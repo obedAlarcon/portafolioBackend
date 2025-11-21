@@ -1,26 +1,33 @@
 const express = require('express')
-const {Strategy} = require('passport-local');
-const AuthService = require('./../../../services/auth.service')
+const {Strategy}=require('passport-local');
+
+const AuthService=require('./../../../services/auth.service')
 const service = new AuthService();
 
+
+
+
 const LocalStrategy = new Strategy({
-  usernameField: 'email',
-  passwordField: 'password' // ✅ Asegúrate de incluir esto
-}, async (email, password, done) => {
-  try {
-    const user = await service.getUser(email, password);
+ usernameField:'email',
+ 
+
+},async (email,password,done)=>{
+
+try {
+    // le decimos que nos busque por email 
+  const user= await  service.getUser(email,password)
+ 
+  done(null,user)
+} catch (error) {
+    // si algo sale masl ejecutamos el done y mandamos el error y le decimos que no fue pocible 
+    done(error, false)
     
-    if (!user) {
-      // ✅ Usuario no encontrado o credenciales inválidas
-      return done(null, false, { message: 'Invalid email or password' });
-    }
-    
-    // ✅ Autenticación exitosa
-    return done(null, user);
-  } catch (error) {
-    // ✅ Error del servidor
-    return done(error, false);
-  }
+}
+
 });
 
-module.exports = LocalStrategy;
+
+
+
+
+module.exports = LocalStrategy
