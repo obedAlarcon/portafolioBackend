@@ -1,29 +1,36 @@
+// middlewares/multer.js
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Asegurarse de que la carpeta uploads existe
-const uploadDir = path.join(__dirname, '../uploads');
+// EN RENDER: usa /tmp/uploads (persiste durante el ciclo de vida del servicio)
+// EN LOCAL: usa uploads/ normal
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, '../uploads');
+
+// Crear directorio si no existe
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log(`📁 Carpeta creada: ${uploadDir}`);
 }
 
-// Configuración de almacenamiento de multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    // Nombre único
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
+    cb(null, uniqueName);
   }
 });
 
-// Exportar multer configurado SIN .single()
-const multerConfig = multer({ 
+const upload = multer({ 
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB
   }
 });
 
-module.exports = multerConfig;
+module.exports = upload;

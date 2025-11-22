@@ -16,47 +16,32 @@ const service = new ProyectService();
 // Ruta para obtener todos los proyectos
 router.get('/', async (req, res, next) => {
   try {
-    const proyect = await service.find();
+    const proyectos = await service.find();
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
-    proyect.forEach((proyect) => {
-      if (proyect.image) {
-        // Convertir la ruta relativa a una URL completa
-        proyect.image = `${baseUrl}/uploads/${proyect.image.replace(/\\/g, '/')}`;
+    const proyectosConImagen = proyectos.map(proyecto => {
+      if (proyecto.image) {
+        // En producción, la imagen ya está en /tmp/uploads
+        return {
+          ...proyecto.dataValues,
+          image: `${baseUrl}/uploads/${path.basename(proyecto.image)}`
+        };
       }
+      return proyecto;
     });
 
-    res.json(proyect);
-  } catch (error) {
-    next(error);
-  } 
-});
-
-// Ruta para obtener un proyecto por ID
-router.get('/:id', 
-  async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const proyect = await service.findOne(id);
-    
-    // Construir URL completa para la imagen
-    if (proyect.image) {
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      proyect.image = `${baseUrl}/uploads/${proyect.image.replace(/\\/g, '/')}`;
-    }
-    
-    res.json(proyect);
+    res.json(proyectosConImagen);
   } catch (error) {
     next(error);
   }
 });
 
-// Ruta para crear un nuevo proyecto (con una sola imagen)
-router.post('/upload', 
-  passport.authenticate('jwt', {session: false}), 
+// Ruta para crear proyecto
+router.post('/upload',
+  passport.authenticate('jwt', { session: false }),
   checkRoles('admin'),
-  upload.single('image'), // Aplicar .single() aquí
-  validatorHandler(createProyectSchema, 'body'),       
+  upload.single('image'),
+  validatorHandler(createProyectSchema, 'body'),
   async (req, res, next) => {
     try {
       console.log('📤 Archivo subido:', req.file);
@@ -67,18 +52,22 @@ router.post('/upload',
       }
 
       const body = req.body;
-      // Guardar solo el nombre del archivo
+      
+      // GUARDAR SOLO EL NOMBRE DEL ARCHIVO en la base de datos
       body.image = req.file.filename;
 
       const newProyect = await service.create(body);
       
       // Construir URL completa para la respuesta
       const baseUrl = `${req.protocol}://${req.get('host')}`;
-      newProyect.dataValues.image = `${baseUrl}/uploads/${req.file.filename}`;
+      const responseProyect = {
+        ...newProyect.dataValues,
+        image: `${baseUrl}/uploads/${req.file.filename}`
+      };
 
       res.status(201).json({
         message: 'Proyecto creado exitosamente',
-        proyect: newProyect
+        proyect: responseProyect
       });
     } catch (error) {
       next(error);
@@ -86,10 +75,10 @@ router.post('/upload',
   }
 );
 
-// Ruta para actualizar un proyecto con una nueva imagen
-router.patch('/:id',  
-  upload.single('image'), // Aplicar .single() aquí
-  validatorHandler(updateProyectSchema, 'body'), 
+// Ruta para actualizar proyecto
+router.patch('/:id',
+  upload.single('image'),
+  validatorHandler(updateProyectSchema, 'body'),
   validatorHandler(getProyectSchema, 'params'),
   async (req, res, next) => {
     try {
@@ -97,8 +86,8 @@ router.patch('/:id',
       const body = req.body;
 
       if (req.file) {
-        // Si se sube una nueva imagen, actualizamos el campo 'image'
-        body.image = req.file.filename; // Solo el nombre del archivo
+        // Guardar solo el nombre del archivo
+        body.image = req.file.filename;
       }
 
       const proyect = await service.update(id, body);
@@ -106,7 +95,7 @@ router.patch('/:id',
       // Construir URL completa para la respuesta
       if (proyect.image) {
         const baseUrl = `${req.protocol}://${req.get('host')}`;
-        proyect.image = `${baseUrl}/uploads/${proyect.image.replace(/\\/g, '/')}`;
+        proyect.image = `${baseUrl}/uploads/${proyect.image}`;
       }
       
       res.json(proyect);
@@ -116,49 +105,62 @@ router.patch('/:id',
   }
 );
 
-// Ruta para eliminar un proyecto
-router.delete('/:id', 
-  passport.authenticate('jwt', {session: false}),
+// Ruta para eliminar proyecto
+router.delete('/:id',
+  passport.authenticate('jwt', { session: false }),
   checkRoles('admin'),
   async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const proyect = await service.findOne(id);  // Buscar el proyecto para obtener la imagen
+    try {
+      const { id } = req.params;
+      const proyect = await service.findOne(id);
 
-    // Eliminar la imagen si existe
-    if (proyect.image) {
-      const imagePath = path.join(__dirname, '../uploads', proyect.image);
-      fs.unlink(imagePath, (err) => {
-        if (err) {
-          console.error('Error al eliminar la imagen', err);
-        } else {
-          console.log('Imagen eliminada');
-        }
+      // Eliminar la imagen si existe
+      if (proyect.image) {
+        const uploadDir = process.env.NODE_ENV === 'production' 
+          ? '/tmp/uploads' 
+          : path.join(__dirname, '../uploads');
+        const imagePath = path.join(uploadDir, proyect.image);
+        
+        fs.unlink(imagePath, (err) => {
+          if (err) {
+            console.error('Error al eliminar la imagen:', err);
+          } else {
+            console.log('✅ Imagen eliminada:', imagePath);
+          }
+        });
+      }
+
+      await service.delete(id);
+      res.status(200).json({ 
+        message: 'Proyecto eliminado exitosamente',
+        id: id 
       });
+    } catch (error) {
+      next(error);
     }
-
-    await service.delete(id);  // Eliminar el proyecto
-    res.status(201).json({ id });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-// Ruta de diagnóstico para verificar uploads
+// Ruta de diagnóstico MEJORADA
 router.get('/debug/upload-status', (req, res) => {
-  const uploadPath = path.join(__dirname, '../uploads');
-  const exists = fs.existsSync(uploadPath);
+  const uploadDir = process.env.NODE_ENV === 'production' 
+    ? '/tmp/uploads' 
+    : path.join(__dirname, '../uploads');
   
+  const exists = fs.existsSync(uploadDir);
   let files = [];
+  
   if (exists) {
-    files = fs.readdirSync(uploadPath);
+    files = fs.readdirSync(uploadDir);
   }
   
   res.json({
+    environment: process.env.NODE_ENV,
     uploadFolderExists: exists,
-    uploadPath: uploadPath,
+    uploadPath: uploadDir,
     filesCount: files.length,
-    files: files
+    files: files,
+    absolutePath: path.resolve(uploadDir)
   });
 });
 
