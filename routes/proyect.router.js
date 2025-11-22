@@ -1,6 +1,6 @@
 const express = require('express');
 const ProyectService = require('./../services/proyect.service');
-const multer = require('multer');
+const upload = require('./../middlewares/multer');
 const { createProyectSchema, updateProyectSchema, getProyectSchema } = require('./../schemas/proyect.schema');
 const path = require('path');
 const fs = require('node:fs');
