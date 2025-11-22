@@ -29,30 +29,18 @@ router.get('/', async (req, res, next) => {
 });
 
 // 🚀 POST - Crear proyecto + imagen
-router.post('/',
-  passport.authenticate('jwt', { session: false }),
-  checkRoles('admin'),
-  upload.single('image'),
-  validatorHandler(createProyectSchema, 'body'),
-  async (req, res, next) => {
-    try {
-      const body = req.body;
-
-      if (req.file) {
-        body.image = req.file.filename;
-      }
-
-      const newProyect = await service.create(body);
-
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      newProyect.image = `${baseUrl}/uploads/${newProyect.image}`;
-
-      res.status(201).json(newProyect);
-    } catch (error) {
-      next(error);
-    }
+router.post("/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "No se recibió ningún archivo" });
   }
-);
+
+  return res.status(200).json({
+    message: "Imagen subida correctamente",
+    file: req.file.filename,
+    url: `/uploads/${req.file.filename}`
+  });
+});
+
 
 // 🚀 PATCH - Actualizar proyecto
 router.patch('/:id',

@@ -40,11 +40,14 @@ require('./utils/auth');  // Asegúrate que este archivo de autenticación esté
 // Directorio para subir archivos
 // Middleware para servir archivos estáticos desde la carpeta "uploads"
 // Ruta absoluta a la carpeta uploads (FUNCIONA EN RENDER)
-const uploadsPath = path.join(__dirname, 'uploads');
-console.log("📁 Carpeta uploads en:", uploadsPath);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// Hacerla pública
-app.use('/uploads', express.static(uploadsPath));
+// Rutas
+app.use("/api/v1/proyect", proyectRouter);
+
+app.get("/", (req, res) => {
+  res.send("Backend funcionando");
+});
 
 // Rutas de la API
 routerApi(app)
