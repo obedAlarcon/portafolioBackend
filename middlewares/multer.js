@@ -1,24 +1,30 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+// middlewares/multer.js
 
-const uploadDir = path.join(process.cwd(), "uploads");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
-// Crear carpeta si no existe
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+// Asegurar que la carpeta uploads exista
+const uploadPath = path.join(__dirname, "..", "uploads");
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+  console.log("📁 Carpeta uploads creada:", uploadPath);
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
+  destination: function (req, file, cb) {
+    cb(null, uploadPath); 
   },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + file.originalname;
-    cb(null, uniqueName);
-  },
+
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + "-" + Math.round(Math.random() * 1e9) + ext);
+  }
 });
 
+// 👇 ESTA ES LA INSTANCIA CORRECTA
 const upload = multer({ storage });
 
-export default upload;
+// 👇 ESTA ES LA EXPORTACIÓN CORRECTA PARA REQUIRE()
+module.exports = upload;
