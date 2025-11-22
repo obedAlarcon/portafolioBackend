@@ -1,16 +1,29 @@
-// Archivo de configuración de multer
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Asegurarse de que la carpeta uploads existe
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configuración de almacenamiento de multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');  // Establecer la carpeta donde se guardarán las imágenes
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);  // Asignar un nombre único al archivo
+    cb(null, Date.now() + '-' + file.originalname);
   }
 });
 
-// Configurar multer para una sola imagen
-const upload = multer({ storage: storage }).single('image');  // Solo una imagen
-module.exports = upload;
+// Exportar multer configurado SIN .single()
+const multerConfig = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
+
+module.exports = multerConfig;
