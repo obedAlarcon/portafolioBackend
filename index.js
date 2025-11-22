@@ -39,20 +39,13 @@ require('./utils/auth');  // Asegúrate que este archivo de autenticación esté
 
 // Directorio para subir archivos
 // Middleware para servir archivos estáticos desde la carpeta "uploads"
+// Ruta absoluta a la carpeta uploads (FUNCIONA EN RENDER)
+const uploadsPath = path.join(__dirname, 'uploads');
+console.log("📁 Carpeta uploads en:", uploadsPath);
 
-if (process.env.NODE_ENV === 'production') {
-  const tmpUploads = '/tmp/uploads';
-  // Crear carpeta si no existe
-  if (!fs.existsSync(tmpUploads)) {
-    fs.mkdirSync(tmpUploads, { recursive: true });
-  }
-  app.use('/uploads', express.static(tmpUploads));
-  console.log('🔧 Sirviendo archivos desde /tmp/uploads');
-} else {
-  // Desarrollo local
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  console.log('🔧 Sirviendo archivos desde uploads/ local');
-}
+// Hacerla pública
+app.use('/uploads', express.static(uploadsPath));
+
 // Rutas de la API
 routerApi(app)
 

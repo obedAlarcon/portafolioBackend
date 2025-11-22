@@ -89,43 +89,27 @@ router.get('/', async (req, res, next) => {
 });
 
 // Ruta para crear proyecto
-router.post('/upload',
-  passport.authenticate('jwt', { session: false }),
-  checkRoles('admin'),
-  upload.single('image'),
-  validatorHandler(createProyectSchema, 'body'),
-  async (req, res, next) => {
-    try {
-      console.log('📤 Archivo subido:', req.file);
-      console.log('📝 Body recibido:', req.body);
 
-      if (!req.file) {
-        return res.status(400).json({ message: 'No se ha subido ninguna imagen.' });
-      }
-
-      const body = req.body;
-      
-      // GUARDAR SOLO EL NOMBRE DEL ARCHIVO en la base de datos
-      body.image = req.file.filename;
-
-      const newProyect = await service.create(body);
-      
-      // Construir URL completa para la respuesta
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const responseProyect = {
-        ...newProyect.dataValues,
-        image: `${baseUrl}/uploads/${req.file.filename}`
-      };
-
-      res.status(201).json({
-        message: 'Proyecto creado exitosamente',
-        proyect: responseProyect
-      });
-    } catch (error) {
-      next(error);
-    }
+router.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No se recibió imagen' });
   }
-);
+
+  const fileUrl = `/uploads/${req.file.filename}`;
+
+  res.json({
+    message: 'Imagen subida',
+    url: fileUrl
+  });
+});
+
+// Ruta para probar (NO sube imagen)
+router.get('/upload-test', (req, res) => {
+  res.json({
+    message: 'Ruta funcionando',
+    ruta_absoluta_uploads: path.join(__dirname, '../uploads'),
+  });
+});
 
 // Ruta para actualizar proyecto
 router.patch('/:id',
