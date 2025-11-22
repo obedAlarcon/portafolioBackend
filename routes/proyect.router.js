@@ -11,7 +11,59 @@ const {checkRoles}=require('./../middlewares/auth.handler')
 
 const router = express.Router();
 
-
+// Agrega esto temporalmente en tu proyect.router.js - ANTES de las otras rutas
+router.get('/debug/upload-test', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  // Todas las rutas posibles
+  const pathsToCheck = [
+    '/tmp/uploads',
+    path.join(__dirname, '../uploads'),
+    path.join(process.cwd(), 'uploads'),
+    './uploads'
+  ];
+  
+  const results = {};
+  
+  pathsToCheck.forEach(checkPath => {
+    try {
+      const absolutePath = path.resolve(checkPath);
+      results[checkPath] = {
+        exists: fs.existsSync(absolutePath),
+        absolutePath: absolutePath,
+        canWrite: false,
+        files: []
+      };
+      
+      if (results[checkPath].exists) {
+        results[checkPath].files = fs.readdirSync(absolutePath);
+        // Test de escritura
+        try {
+          const testFile = path.join(absolutePath, 'test-write.txt');
+          fs.writeFileSync(testFile, 'test');
+          fs.unlinkSync(testFile);
+          results[checkPath].canWrite = true;
+        } catch (e) {
+          results[checkPath].canWrite = false;
+          results[checkPath].writeError = e.message;
+        }
+      }
+    } catch (error) {
+      results[checkPath] = { error: error.message };
+    }
+  });
+  
+  // Información del sistema
+  results.system = {
+    cwd: process.cwd(),
+    __dirname: __dirname,
+    NODE_ENV: process.env.NODE_ENV,
+    platform: process.platform
+  };
+  
+  res.json(results);
+});
 const service = new ProyectService();
 // Ruta para obtener todos los proyectos
 router.get('/', async (req, res, next) => {
