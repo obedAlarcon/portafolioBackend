@@ -20,6 +20,10 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
+// En tu multer configuration, verifica los permisos
+console.log('📁 Upload path:', uploadPath);
+console.log('📁 Permisos de carpeta:', fs.existsSync(uploadPath) ? 'EXISTE' : 'NO EXISTE');
+console.log('📁 Puede escribir:', fs.existsSync(uploadPath) ? (fs.accessSync(uploadPath, fs.constants.W_OK) ? 'SI' : 'NO') : 'NO EXISTE');
 
 const upload = multer({ storage });
 

@@ -49,6 +49,9 @@ const uploadPath = process.env.NODE_ENV === 'production'
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
   console.log(`✅ Carpeta de uploads creada en: ${uploadPath}`);
+  app.use('/uploads', express.static(uploadPath));
+console.log(`📁 Sirviendo archivos estáticos desde: ${uploadPath}`);
+
 }
 // Rutas de la API
 routerApi(app)
