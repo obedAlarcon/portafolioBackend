@@ -36,25 +36,32 @@ role:user.role
     }
 
     async sendRecovery(email) {
-      const user = await service.findByEmail(email);
-      if (!user) {
-        throw boom.unauthorized();  
-      }
-      const payload = { sub: user.id };
-      const token = jwt.sign(payload, config.jwtSecret, {expiresIn: '15min'});
-    const link = `http://localhost:4200/recovery?token=${token}`;
+  const user = await service.findByEmail(email);
+  if (!user) {
+    throw boom.unauthorized();  
+  }
 
-      await service.update(user.id, {recoveryToken: token});
+  const payload = { sub: user.id };
+  const token = jwt.sign(payload, config.jwtSecret, { expiresIn: '15min' });
 
-      const mail = {
-        from: config.smtpEmail,
-        to: `${user.email}`,
-        subject: "Email para recuperar contraseña",
-        html: `<b>Ingresa a este link => ${link}</b>`,
-      }
-      const rta = await this.sendMail(mail);
-      return rta;
-    }
+  // Detecta si está en producción o en local
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+
+  const link = `${frontendUrl}/recovery?token=${token}`;
+
+  await service.update(user.id, { recoveryToken: token });
+
+  const mail = {
+    from: config.smtpEmail,
+    to: user.email,
+    subject: "Recuperación de contraseña",
+    html: `<b>Haz clic para recuperar tu contraseña:</b><br><a href="${link}">${link}</a>`,
+  };
+
+  const rta = await this.sendMail(mail);
+  return rta;
+}
+
 
 // este es el endpoint para recuérar password
 async changePassword(token,newPassword){
