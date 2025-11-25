@@ -1,3 +1,5 @@
+
+require('dotenv').config();
 const express = require('express');
 const { logErrors, errorHandler, ormErrorHandler } = require('./middlewares/error.handler');
 const swaggerUi = require('swagger-ui-express');

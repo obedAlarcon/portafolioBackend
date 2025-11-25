@@ -1,28 +1,101 @@
-const nodemailer = require("nodemailer");
+const boom = require('@hapi/boom')
+const UserService = require('./user.service')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+const service =  new UserService()
+const {config}= require('./../config/config')
+const nodemailer= require('nodemailer')
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD
+ class AuthService{
+
+
+  
+   async getUser(email,password){
+  const user=await service.findByEmail(email)
+  if(!user){
+    throw boom.unauthorized()
   }
-});
+  const isMatch=await bcrypt.compare(password,user.password)
+  if(!isMatch){
+    throw boom.unauthorized()
+  }
+delete user.dataValues.password
+return user;
+    }
 
-async function sendMail({ name, email, message }) {
-  const info = await transporter.sendMail({
-    from: `"Portafolio Web" <${process.env.SMTP_EMAIL}>`,
-    to: process.env.SMTP_EMAIL,
-    subject: "Nuevo mensaje de contacto",
-    html: `
-      <h3>Nuevo mensaje desde el formulario</h3>
-      <p><strong>Nombre:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Mensaje:</strong> ${message}</p>
-    `,
-    replyTo: email
-  });
+    signToken(user){
+        const payload={
+sub:user.id,
+role:user.role
+        }
+        const token = jwt.sign(payload,config.jwtSecret)    
+        return {
+           user,
+           token
+        }
+    }
 
-  console.log("Correo enviado:", info.messageId);
+    async sendRecovery(email) {
+      const user = await service.findByEmail(email);
+      if (!user) {
+        throw boom.unauthorized();  
+      }
+      const payload = { sub: user.id };
+      const token = jwt.sign(payload, config.jwtSecret, {expiresIn: '15min'});
+    const link = `http://localhost:4200/recovery?token=${token}`;
+
+      await service.update(user.id, {recoveryToken: token});
+
+      const mail = {
+        from: config.smtpEmail,
+        to: `${user.email}`,
+        subject: "Email para recuperar contraseña",
+        html: `<b>Ingresa a este link => ${link}</b>`,
+      }
+      const rta = await this.sendMail(mail);
+      return rta;
+    }
+
+// este es el endpoint para recuérar password
+async changePassword(token,newPassword){
+  try {
+    const payload = jwt.verify(token, config.jwtSecret)
+    const user = await service.findOne(payload.sub)
+    if(user.recoveryToken !== token){
+      throw boom.unauthorized()
+    }
+    const hash = await bcrypt.hash(newPassword,10)
+    await service.update(user.id, {recoveryToken:null,password:hash})
+    return {message: 'password changed'}
+  } catch (error) {
+    throw boom.unauthorized()
+  }
+
 }
 
-module.exports = sendMail;
+
+
+
+
+
+
+
+async sendMail(infoMail){
+
+    
+ const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // true for port 465, false for other ports
+    auth: {
+      user:config.smtpEmail, // tremos las veriables de ambiente desde .env, config/config.js
+      pass: config.smtpPassword
+    }, 
+ })
+await transporter.sendMail(infoMail)
+return {massege:'mail sent'}
+    // send mail with defined transport object
+}
+}
+ 
+ module.exports =AuthService
